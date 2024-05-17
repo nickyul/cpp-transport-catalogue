@@ -5,7 +5,6 @@
 #include <set>
 #include <string>
 #include <deque>
-#include <stdexcept>
 #include <vector>
 
 #include "geo.h"
@@ -14,24 +13,31 @@ namespace catalogue {
 
 	struct Stop {
 		std::string stop_name;
-		double lat;
-		double lng;
+		detail::Coordinates coordinates;
 	};
 
 	struct Bus {
 		std::string bus_name;
-		std::vector<Stop*> stops;
+		std::vector<const Stop*> stops;
 	};
 
-	using StopMap = std::unordered_map<std::string_view, Stop*>;
-	using BusMap = std::unordered_map<std::string_view, Bus*>;
+	struct BusStat {
+		size_t total_stops = 0;
+		size_t unique_stops = 0;
+		double route_length = 0.;
+	};
+
+	using StopMap = std::unordered_map<std::string_view, const Stop*>;
+	using BusMap = std::unordered_map<std::string_view, const Bus*>;
 
 	class TransportCatalogue {
 	public:
 		void AddStop(const std::string& stop_name, const detail::Coordinates& coordinates);
-		void AddBus(const std::string& bus_name, const std::vector<std::string_view> stops);
-		Bus RequestBus(std::string_view bus_name) const;
-		bool RequestStop(std::set<std::string>& buses, std::string_view stop_name) const;
+		void AddBus(const std::string& bus_name, const std::vector<const Stop*> stops);
+		BusStat RequestBus(std::string_view bus_name) const;
+		// возвращайте константный указатель на объект по имени остановки
+		std::unordered_set<const Bus*> RequestStop(const Stop* stop) const;
+		const Stop* GetStop(std::string_view stop_name) const;
 
 	private:
 		// deque всех остановок
@@ -42,6 +48,7 @@ namespace catalogue {
 		std::deque<Bus> buses_;
 		// мапа [название маршрута] = указатель на маршрут в деке
 		BusMap busname_to_bus_;
-		std::unordered_map<Stop*, std::set<std::string>> stop_to_buses_on_stop;
+
+		std::unordered_map<const Stop*, std::unordered_set<const Bus*>> bus_by_stop_;
 	};
 }
