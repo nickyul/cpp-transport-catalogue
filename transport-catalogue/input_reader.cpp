@@ -25,9 +25,9 @@ detail::Coordinates ParseCoordinates(std::string_view str) {
     return { lat, lng };
 }
 
- /**
- * Удаляет пробелы в начале и конце строки
- **/
+/**
+* Удаляет пробелы в начале и конце строки
+**/
 std::string_view Trim(std::string_view string) {
     const auto start = string.find_first_not_of(' ');
     if (start == string.npos) {
@@ -56,11 +56,11 @@ std::vector<std::string_view> Split(std::string_view string, char delim) {
     return result;
 }
 
-    /**
-     * Парсит маршрут.
-     * Для кольцевого маршрута (A>B>C>A) возвращает массив названий остановок [A,B,C,A]
-     * Для некольцевого маршрута (A-B-C-D) возвращает массив названий остановок [A,B,C,D,C,B,A]
-     */
+/**
+ * Парсит маршрут.
+ * Для кольцевого маршрута (A>B>C>A) возвращает массив названий остановок [A,B,C,A]
+ * Для некольцевого маршрута (A-B-C-D) возвращает массив названий остановок [A,B,C,D,C,B,A]
+ */
 std::vector<std::string_view> ParseRoute(std::string_view route) {
     if (route.find('>') != route.npos) {
         return Split(route, '>');
@@ -115,7 +115,18 @@ void input::InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue& cata
     // parsing buses
     for (const CommandDescription& command : commands_) {
         if (command.command == "Bus") {
-            catalogue.AddBus(command.id, ParseRoute(command.description));
+            std::vector<const Stop*> stops;
+
+            for (const std::string_view& stop_name : ParseRoute(command.description)) {
+                const Stop* stop = catalogue.GetStop(stop_name);
+                if (stop != nullptr) {
+                    stops.push_back(stop);
+                }
+                else {
+                    throw std::invalid_argument("Invalid stop on bus " + command.id);
+                }
+            }
+            catalogue.AddBus(command.id, stops);
         }
         else {
             continue;
