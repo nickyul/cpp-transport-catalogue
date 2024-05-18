@@ -38,6 +38,7 @@ namespace catalogue {
 		// возвращайте константный указатель на объект по имени остановки
 		std::unordered_set<const Bus*> RequestStop(const Stop* stop) const;
 		const Stop* GetStop(std::string_view stop_name) const;
+		const Bus* GetBus(std::string_view bus_name) const;
 
 	private:
 		// deque всех остановок
