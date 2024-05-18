@@ -19,7 +19,7 @@ void TransportCatalogue::AddStop(const std::string& stop_name, const detail::Coo
 }
 
 void TransportCatalogue::AddBus(const std::string& bus_name, const std::vector<const Stop*> stops) {
-	const Bus bus{ bus_name, stops };
+	const Bus bus{ bus_name, std::move(stops) };
 	buses_.push_back(std::move(bus));
 	busname_to_bus_[buses_.back().bus_name] = &buses_.back();
 
@@ -65,6 +65,13 @@ std::unordered_set<const Bus*> TransportCatalogue::RequestStop(const Stop* stop)
 const Stop* TransportCatalogue::GetStop(std::string_view stop_name) const {
 	if (stopname_to_stop_.count(stop_name)) {
 		return stopname_to_stop_.at(stop_name);
+	}
+	return nullptr;
+}
+
+const Bus* catalogue::TransportCatalogue::GetBus(std::string_view bus_name) const {
+	if (busname_to_bus_.count(bus_name)) {
+		return busname_to_bus_.at(bus_name);
 	}
 	return nullptr;
 }
