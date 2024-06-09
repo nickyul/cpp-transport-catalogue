@@ -16,7 +16,7 @@ void output::ParseAndPrintStat(const TransportCatalogue& transport_catalogue, st
 	std::string_view request_id = request.substr(colon_space + 1);
 
 	if (command == "Stop"s) {
-		
+
 		const Stop* stop = transport_catalogue.GetStop(request_id);
 		if (stop == nullptr) {
 			output << "Stop "s << request_id << ": not found\n"s;
@@ -47,8 +47,9 @@ void output::ParseAndPrintStat(const TransportCatalogue& transport_catalogue, st
 			output << "Bus "s << request_id << ": not found \n"s;
 			return;
 		}
-		output << "Bus "s << request_id << ": "s << stats.total_stops << " stops on route, "s << 
-			stats.unique_stops << " unique stops, "s << std::setprecision(6) << stats.route_length << " route length\n";
+		output << "Bus "s << request_id << ": "s << stats.total_stops << " stops on route, "s <<
+			stats.unique_stops << " unique stops, "s << std::setprecision(6) << stats.route_length
+			<< " route length, "<< stats.curvature << " curvature\n";
 	}
 
 	else {
