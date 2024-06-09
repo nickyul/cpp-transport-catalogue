@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iterator>
+#include <stdexcept>
 
 using namespace catalogue;
 
@@ -100,6 +101,21 @@ void input::InputReader::ParseLine(std::string_view line) {
     }
 }
 
+std::vector<std::pair<std::string_view, int>> ParseDistances(std::string_view str) {
+    std::vector<std::pair<std::string_view, int>> result;
+    std::vector<std::string_view> lines = Split(str, ',');
+    for (size_t i = 2; i < lines.size(); ++i) {
+        std::string_view s = lines[i];
+        auto m_pos = s.find('m');
+        std::string dist{ Trim(s.substr(0, m_pos)) };
+        int distance = std::stoi(dist);
+
+        std::string_view stop_name = Trim(s.substr(m_pos + 4));
+        result.push_back({ stop_name, distance });
+    }
+    return result;
+}
+
 void input::InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue& catalogue) const {
     //commands_ -> catalogue
 
@@ -107,6 +123,19 @@ void input::InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue& cata
     for (const CommandDescription& command : commands_) {
         if (command.command == "Stop") {
             catalogue.AddStop(command.id, ParseCoordinates(command.description));
+        }
+        else {
+            continue;
+        }
+    }
+    for (const CommandDescription& command : commands_) {
+        if (command.command == "Stop") {
+            // method to add distance for stops
+            const Stop* stop_from = catalogue.GetStop(command.id);
+            for (const auto& pair : ParseDistances(command.description)) {
+                const Stop* stop_to = catalogue.GetStop(pair.first);
+                catalogue.AddDistance(stop_from, stop_to, pair.second);
+            }
         }
         else {
             continue;
