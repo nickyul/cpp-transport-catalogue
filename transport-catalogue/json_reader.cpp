@@ -3,41 +3,41 @@
 using namespace std::literals;
 
 
-void JsonReader::MakeCatalogue(catalogue::TransportCatalogue& cat) const {
+void JsonReader::MakeCatalogue(catalogue::TransportCatalogue& catalogue) const {
 	Array base_requests_arr = document_.GetRoot().AsMap().at("base_requests"s).AsArray();
-	ParseStopCoord(base_requests_arr, cat);
-	ParseStopDistances(base_requests_arr, cat);
-	ParseBuses(base_requests_arr, cat);
+	ParseStopCoord(base_requests_arr, catalogue);
+	ParseStopDistances(base_requests_arr, catalogue);
+	ParseBuses(base_requests_arr, catalogue);
 }
 
-Array JsonReader::GetRequestArray() const {
+const Array& JsonReader::GetRequestArray() const {
 	return document_.GetRoot().AsMap().at("stat_requests"s).AsArray();
 }
 
-void JsonReader::ParseStopCoord(const Array& base_requests_arr, catalogue::TransportCatalogue& cat) const {
+void JsonReader::ParseStopCoord(const Array& base_requests_arr, catalogue::TransportCatalogue& catalogue) const {
 	for (const Node& stop_node : base_requests_arr) {
 		Dict stop_map = stop_node.AsMap();
 		if (stop_map.at("type"s).AsString() != "Stop"s) {
 			continue;
 		}
-		cat.AddStop(stop_map.at("name"s).AsString(), { stop_map.at("latitude"s).AsDouble(), stop_map.at("longitude"s).AsDouble() });
+		catalogue.AddStop(stop_map.at("name"s).AsString(), { stop_map.at("latitude"s).AsDouble(), stop_map.at("longitude"s).AsDouble() });
 	}
 }
 
-void JsonReader::ParseStopDistances(const Array& base_requests_arr, catalogue::TransportCatalogue& cat) const {
+void JsonReader::ParseStopDistances(const Array& base_requests_arr, catalogue::TransportCatalogue& catalogue) const {
 	for (const Node& stop_node : base_requests_arr) {
 		if (stop_node.AsMap().at("type"s).AsString() != "Stop"s) {
 			continue;
 		}
-		StopPtr stop_from = cat.GetStop(stop_node.AsMap().at("name"s).AsString());
+		StopPtr stop_from = catalogue.GetStop(stop_node.AsMap().at("name"s).AsString());
 
 		for (const auto& dist : stop_node.AsMap().at("road_distances"s).AsMap()) {
-			cat.AddDistance(stop_from, cat.GetStop(dist.first), dist.second.AsInt());
+			catalogue.AddDistance(stop_from, catalogue.GetStop(dist.first), dist.second.AsInt());
 		}
 	}
 }
 
-void JsonReader::ParseBuses(const Array& base_requests_arr, catalogue::TransportCatalogue& cat) const {
+void JsonReader::ParseBuses(const Array& base_requests_arr, catalogue::TransportCatalogue& catalogue) const {
 	for (const Node& bus_node : base_requests_arr) {
 		Dict bus_map = bus_node.AsMap();
 		if (bus_map.at("type"s).AsString() != "Bus"s) {
@@ -46,7 +46,7 @@ void JsonReader::ParseBuses(const Array& base_requests_arr, catalogue::Transport
 		std::vector<const Stop*> stops;
 
 		for (const Node& stop_node : bus_map.at("stops"s).AsArray()) {
-			stops.emplace_back(cat.GetStop(stop_node.AsString()));
+			stops.emplace_back(catalogue.GetStop(stop_node.AsString()));
 		}
 		if (!bus_map.at("is_roundtrip"s).AsBool()) {
 			bool first = true;
@@ -55,10 +55,10 @@ void JsonReader::ParseBuses(const Array& base_requests_arr, catalogue::Transport
 					first = false;
 					continue;
 				}
-				stops.emplace_back(cat.GetStop(it->AsString()));
+				stops.emplace_back(catalogue.GetStop(it->AsString()));
 			}
 		}
-		cat.AddBus(bus_map.at("name"s).AsString(), stops, bus_map.at("is_roundtrip"s).AsBool());
+		catalogue.AddBus(bus_map.at("name"s).AsString(), stops, bus_map.at("is_roundtrip"s).AsBool());
 	}
 }
 
