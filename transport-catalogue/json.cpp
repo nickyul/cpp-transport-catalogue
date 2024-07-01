@@ -40,7 +40,7 @@ namespace json {
 
             std::string parsed_num;
 
-            // Считывает в parsed_num очередной символ из input
+            // РЎС‡РёС‚С‹РІР°РµС‚ РІ parsed_num РѕС‡РµСЂРµРґРЅРѕР№ СЃРёРјРІРѕР» РёР· input
             auto read_char = [&parsed_num, &input] {
                 parsed_num += static_cast<char>(input.get());
                 if (!input) {
@@ -48,7 +48,7 @@ namespace json {
                 }
                 };
 
-            // Считывает одну или более цифр в parsed_num из input
+            // РЎС‡РёС‚С‹РІР°РµС‚ РѕРґРЅСѓ РёР»Рё Р±РѕР»РµРµ С†РёС„СЂ РІ parsed_num РёР· input
             auto read_digits = [&input, read_char] {
                 if (!std::isdigit(input.peek())) {
                     throw ParsingError("A digit is expected"s);
@@ -61,24 +61,24 @@ namespace json {
             if (input.peek() == '-') {
                 read_char();
             }
-            // Парсим целую часть числа
+            // РџР°СЂСЃРёРј С†РµР»СѓСЋ С‡Р°СЃС‚СЊ С‡РёСЃР»Р°
             if (input.peek() == '0') {
                 read_char();
-                // После 0 в JSON не могут идти другие цифры
+                // РџРѕСЃР»Рµ 0 РІ JSON РЅРµ РјРѕРіСѓС‚ РёРґС‚Рё РґСЂСѓРіРёРµ С†РёС„СЂС‹
             }
             else {
                 read_digits();
             }
 
             bool is_int = true;
-            // Парсим дробную часть числа
+            // РџР°СЂСЃРёРј РґСЂРѕР±РЅСѓСЋ С‡Р°СЃС‚СЊ С‡РёСЃР»Р°
             if (input.peek() == '.') {
                 read_char();
                 read_digits();
                 is_int = false;
             }
 
-            // Парсим экспоненциальную часть числа
+            // РџР°СЂСЃРёРј СЌРєСЃРїРѕРЅРµРЅС†РёР°Р»СЊРЅСѓСЋ С‡Р°СЃС‚СЊ С‡РёСЃР»Р°
             if (int ch = input.peek(); ch == 'e' || ch == 'E') {
                 read_char();
                 if (ch = input.peek(); ch == '+' || ch == '-') {
@@ -90,13 +90,13 @@ namespace json {
 
             try {
                 if (is_int) {
-                    // Сначала пробуем преобразовать строку в int
+                    // РЎРЅР°С‡Р°Р»Р° РїСЂРѕР±СѓРµРј РїСЂРµРѕР±СЂР°Р·РѕРІР°С‚СЊ СЃС‚СЂРѕРєСѓ РІ int
                     try {
                         return Node{ std::stoi(parsed_num) };
                     }
                     catch (...) {
-                        // В случае неудачи, например, при переполнении,
-                        // код ниже попробует преобразовать строку в double
+                        // Р’ СЃР»СѓС‡Р°Рµ РЅРµСѓРґР°С‡Рё, РЅР°РїСЂРёРјРµСЂ, РїСЂРё РїРµСЂРµРїРѕР»РЅРµРЅРёРё,
+                        // РєРѕРґ РЅРёР¶Рµ РїРѕРїСЂРѕР±СѓРµС‚ РїСЂРµРѕР±СЂР°Р·РѕРІР°С‚СЊ СЃС‚СЂРѕРєСѓ РІ double
                     }
                 }
                 return Node{ std::stod(parsed_num) };
@@ -114,24 +114,24 @@ namespace json {
             string s;
             while (true) {
                 if (it == end) {
-                    // Поток закончился до того, как встретили закрывающую кавычку
+                    // РџРѕС‚РѕРє Р·Р°РєРѕРЅС‡РёР»СЃСЏ РґРѕ С‚РѕРіРѕ, РєР°Рє РІСЃС‚СЂРµС‚РёР»Рё Р·Р°РєСЂС‹РІР°СЋС‰СѓСЋ РєР°РІС‹С‡РєСѓ
                     throw ParsingError("String parsing error");
                 }
                 const char ch = *it;
                 if (ch == '"') {
-                    // Встретили закрывающую кавычку
+                    // Р’СЃС‚СЂРµС‚РёР»Рё Р·Р°РєСЂС‹РІР°СЋС‰СѓСЋ РєР°РІС‹С‡РєСѓ
                     ++it;
                     break;
                 }
                 else if (ch == '\\') {
-                    // Встретили начало escape-последовательности
+                    // Р’СЃС‚СЂРµС‚РёР»Рё РЅР°С‡Р°Р»Рѕ escape-РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚Рё
                     ++it;
                     if (it == end) {
-                        // Поток завершился сразу после символа обратной косой черты
+                        // РџРѕС‚РѕРє Р·Р°РІРµСЂС€РёР»СЃСЏ СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ СЃРёРјРІРѕР»Р° РѕР±СЂР°С‚РЅРѕР№ РєРѕСЃРѕР№ С‡РµСЂС‚С‹
                         throw ParsingError("String parsing error");
                     }
                     const char escaped_char = *(it);
-                    // Обрабатываем одну из последовательностей: \\, \n, \t, \r, \"
+                    // РћР±СЂР°Р±Р°С‚С‹РІР°РµРј РѕРґРЅСѓ РёР· РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚РµР№: \\, \n, \t, \r, \"
                     switch (escaped_char) {
                     case 'n':
                         s.push_back('\n');
@@ -149,16 +149,16 @@ namespace json {
                         s.push_back('\\');
                         break;
                     default:
-                        // Встретили неизвестную escape-последовательность
+                        // Р’СЃС‚СЂРµС‚РёР»Рё РЅРµРёР·РІРµСЃС‚РЅСѓСЋ escape-РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚СЊ
                         throw ParsingError("Unrecognized escape sequence \\"s + escaped_char);
                     }
                 }
                 else if (ch == '\n' || ch == '\r') {
-                    // Строковый литерал внутри- JSON не может прерываться символами \r или \n
+                    // РЎС‚СЂРѕРєРѕРІС‹Р№ Р»РёС‚РµСЂР°Р» РІРЅСѓС‚СЂРё- JSON РЅРµ РјРѕР¶РµС‚ РїСЂРµСЂС‹РІР°С‚СЊСЃСЏ СЃРёРјРІРѕР»Р°РјРё \r РёР»Рё \n
                     throw ParsingError("Unexpected end of line"s);
                 }
                 else {
-                    // Просто считываем очередной символ и помещаем его в результирующую строку
+                    // РџСЂРѕСЃС‚Рѕ СЃС‡РёС‚С‹РІР°РµРј РѕС‡РµСЂРµРґРЅРѕР№ СЃРёРјРІРѕР» Рё РїРѕРјРµС‰Р°РµРј РµРіРѕ РІ СЂРµР·СѓР»СЊС‚РёСЂСѓСЋС‰СѓСЋ СЃС‚СЂРѕРєСѓ
                     s.push_back(ch);
                 }
                 ++it;
@@ -249,59 +249,36 @@ namespace json {
         }
     }  // namespace
 
-
-    Node::Node(nullptr_t null)
-        : value_(null) {}
-
-    Node::Node(Array array)
-        : value_(move(array)) {}
-
-    Node::Node(Dict map)
-        : value_(move(map)) {}
-
-    Node::Node(bool value)
-        : value_(value) {}
-
-    Node::Node(int value)
-        : value_(value) {}
-
-    Node::Node(double value)
-        : value_(value) {}
-
-    Node::Node(string value)
-        : value_(move(value)) {}
-
-
     bool Node::IsArray() const {
-        return holds_alternative<Array>(value_) ? true : false;
+        return holds_alternative<Array>(*this) ? true : false;
     }
 
     bool Node::IsMap() const {
-        return holds_alternative<Dict>(value_) ? true : false;
+        return holds_alternative<Dict>(*this) ? true : false;
     }
 
     bool Node::IsBool() const {
-        return holds_alternative<bool>(value_) ? true : false;
+        return holds_alternative<bool>(*this) ? true : false;
     }
 
     bool Node::IsInt() const {
-        return holds_alternative<int>(value_) ? true : false;
+        return holds_alternative<int>(*this) ? true : false;
     }
 
     bool Node::IsDouble() const {
-        return (holds_alternative<double>(value_) || holds_alternative<int>(value_)) ? true : false;
+        return (holds_alternative<double>(*this) || holds_alternative<int>(*this)) ? true : false;
     }
 
     bool Node::IsPureDouble() const {
-        return holds_alternative<double>(value_) ? true : false;
+        return holds_alternative<double>(*this) ? true : false;
     }
 
     bool Node::IsString() const {
-        return holds_alternative<string>(value_) ? true : false;
+        return holds_alternative<string>(*this) ? true : false;
     }
 
     bool Node::IsNull() const {
-        return holds_alternative<nullptr_t>(value_) ? true : false;
+        return holds_alternative<nullptr_t>(*this) ? true : false;
     }
 
 
@@ -309,46 +286,46 @@ namespace json {
         if (!IsArray()) {
             throw logic_error("Is not Array");
         }
-        return get<Array>(value_);
+        return get<Array>(*this);
     }
 
     const Dict& Node::AsMap() const {
         if (!IsMap()) {
             throw logic_error("Is not Map");
         }
-        return get<Dict>(value_);
+        return get<Dict>(*this);
     }
 
     bool Node::AsBool() const {
         if (!IsBool()) {
             throw logic_error("Is not Bool");
         }
-        return get<bool>(value_);
+        return get<bool>(*this);
     }
 
     int Node::AsInt() const {
         if (!IsInt()) {
             throw logic_error("Is not Int");
         }
-        return get<int>(value_);
+        return get<int>(*this);
     }
 
     double Node::AsDouble() const {
         if (!IsDouble()) {
             throw logic_error("Is not Double");
         }
-        return holds_alternative<double>(value_) ? get<double>(value_) : static_cast<double>(get<int>(value_));
+        return holds_alternative<double>(*this) ? get<double>(*this) : static_cast<double>(get<int>(*this));
     }
 
     const std::string& Node::AsString() const {
         if (!IsString()) {
             throw logic_error("Is not String");
         }
-        return get<string>(value_);
+        return get<string>(*this);
     }
 
     const Node::Value& Node::GetValue() const {
-        return value_;
+        return *this;
     }
 
 
@@ -381,7 +358,7 @@ namespace json {
         return Document{ LoadNode(input) };
     }
 
-    // Контекст вывода, хранит ссылку на поток вывода и текущий отсуп
+    // РљРѕРЅС‚РµРєСЃС‚ РІС‹РІРѕРґР°, С…СЂР°РЅРёС‚ СЃСЃС‹Р»РєСѓ РЅР° РїРѕС‚РѕРє РІС‹РІРѕРґР° Рё С‚РµРєСѓС‰РёР№ РѕС‚СЃСѓРї
     struct PrintContext {
         std::ostream& out;
         int indent_step = 4;
@@ -393,7 +370,7 @@ namespace json {
             }
         }
 
-        // Возвращает новый контекст вывода с увеличенным смещением
+        // Р’РѕР·РІСЂР°С‰Р°РµС‚ РЅРѕРІС‹Р№ РєРѕРЅС‚РµРєСЃС‚ РІС‹РІРѕРґР° СЃ СѓРІРµР»РёС‡РµРЅРЅС‹Рј СЃРјРµС‰РµРЅРёРµРј
         PrintContext Indented() const {
             return { out, indent_step, indent_step + indent };
         }
@@ -402,7 +379,7 @@ namespace json {
     void PrintString(const string& s, ostream& out) {
         out << '"';
         for (const char& ch : s) {
-            // Обрабатываем одну из последовательностей
+            // РћР±СЂР°Р±Р°С‚С‹РІР°РµРј РѕРґРЅСѓ РёР· РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚РµР№
             switch (ch) {
             case '\n':
                 out << "\\n"sv;
@@ -497,7 +474,7 @@ namespace json {
     }
 
     void Print(const Document& doc, std::ostream& output) {
-        PrintNode(doc.GetRoot(), PrintContext{ output });
+        PrintNode(doc.GetRoot(), PrintContext{output});
     }
 
 }  // namespace json
