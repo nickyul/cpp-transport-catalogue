@@ -18,9 +18,9 @@ public:
 	JsonReader(std::istream& cin)
 		: document_(Load(cin)) {}
 
-	void MakeCatalogue(catalogue::TransportCatalogue& cat) const;
+	void MakeCatalogue(catalogue::TransportCatalogue& catalogue) const;
 
-	Array GetRequestArray() const;
+	const Array& GetRequestArray() const;
 
 	RenderSettings ParseSettings() const;
 
@@ -28,11 +28,11 @@ public:
 private:
 	Document document_;
 
-	void ParseStopCoord(const Array& base_requests_arr, catalogue::TransportCatalogue& cat) const;
+	void ParseStopCoord(const Array& base_requests_arr, catalogue::TransportCatalogue& catalogue) const;
 
-	void ParseStopDistances(const Array& base_requests_arr, catalogue::TransportCatalogue& cat) const;
+	void ParseStopDistances(const Array& base_requests_arr, catalogue::TransportCatalogue& catalogue) const;
 
-	void ParseBuses(const Array& base_requests_arr, catalogue::TransportCatalogue& cat) const;
+	void ParseBuses(const Array& base_requests_arr, catalogue::TransportCatalogue& catalogue) const;
 
 	svg::Color ParseColor(const Node& color) const;
 };
