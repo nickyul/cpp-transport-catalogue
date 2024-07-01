@@ -33,14 +33,6 @@ private:
     const JsonReader& json_reader_;
     const MapRenderer renderer_;
 
-    void RenderPolyline(svg::Document& doc, const std::vector<std::pair<BusPtr, int>>& buses_palette, const SphereProjector& proj) const;
-
-    void RenderBusName(svg::Document& doc, const std::vector<std::pair<BusPtr, int>>& buses_palette, const SphereProjector& proj) const;
-
-    void RenderStopCircle(svg::Document& doc, const std::vector<StopPtr>& stops, const SphereProjector& proj) const;
-
-    void RenderStopName(svg::Document& doc, const std::vector<StopPtr>& stops, const SphereProjector& proj) const;
-
     void MakeBusDict(json::Dict& r, BusStat stat, const json::Dict& request_map) const;
 
     void MakeStopDict(json::Dict& r, const json::Dict& request_map) const;
