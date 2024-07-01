@@ -9,29 +9,21 @@
 namespace json {
 
     class Node;
-    // Сохраните объявления Dict и Array без изменения
+    // РЎРѕС…СЂР°РЅРёС‚Рµ РѕР±СЉСЏРІР»РµРЅРёСЏ Dict Рё Array Р±РµР· РёР·РјРµРЅРµРЅРёСЏ
     using Dict = std::map<std::string, Node>;
     using Array = std::vector<Node>;
 
-    // Эта ошибка должна выбрасываться при ошибках парсинга JSON
+    // Р­С‚Р° РѕС€РёР±РєР° РґРѕР»Р¶РЅР° РІС‹Р±СЂР°СЃС‹РІР°С‚СЊСЃСЏ РїСЂРё РѕС€РёР±РєР°С… РїР°СЂСЃРёРЅРіР° JSON
     class ParsingError : public std::runtime_error {
     public:
         using runtime_error::runtime_error;
     };
 
-    class Node {
+    class Node final : std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string> {
     public:
-        /* Реализуйте Node, используя std::variant */
+        /* Р РµР°Р»РёР·СѓР№С‚Рµ Node, РёСЃРїРѕР»СЊР·СѓСЏ std::variant */
+        using variant::variant;
         using Value = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
-
-        Node() = default;
-        Node(nullptr_t null);
-        Node(Array array);
-        Node(Dict map);
-        Node(bool value);
-        Node(int value);
-        Node(double value);
-        Node(std::string value);
 
         bool IsArray() const;
         bool IsMap() const;
@@ -50,9 +42,6 @@ namespace json {
         const std::string& AsString() const;
 
         const Value& GetValue() const;
-
-    private:
-        Value value_;
     };
 
     bool operator==(const Node& lhs, const Node& rhs);
