@@ -2,6 +2,7 @@
 #include "transport_catalogue.h"
 #include "json.h"
 #include "map_renderer.h"
+#include <sstream>
 
 using namespace json;
 
@@ -20,10 +21,9 @@ public:
 
 	void MakeCatalogue(catalogue::TransportCatalogue& catalogue) const;
 
-	const Array& GetRequestArray() const;
-
 	RenderSettings ParseSettings() const;
 
+	json::Document GetRequestDocument(const catalogue::TransportCatalogue& catalogue, const MapRenderer& renderer) const;
 
 private:
 	Document document_;
@@ -35,4 +35,10 @@ private:
 	void ParseBuses(const Array& base_requests_arr, catalogue::TransportCatalogue& catalogue) const;
 
 	svg::Color ParseColor(const Node& color) const;
+
+	void MakeBusDict(json::Dict& r, BusStat stat, const json::Dict& request_map) const;
+
+	void MakeStopDict(json::Dict& r, const catalogue::TransportCatalogue& catalogue, const json::Dict& request_map) const;
+
+	void MakeMapDict(json::Dict& r, const catalogue::TransportCatalogue& catalogue, const MapRenderer& renderer, const json::Node& id) const;
 };
