@@ -1,7 +1,7 @@
 #pragma once
 #include "domain.h"
-#include "geo.h"
 #include "svg.h"
+#include "transport_catalogue.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -105,7 +105,7 @@ public:
 
     int GetPaletteSize() const;
 
-    void GetMapDocument(svg::Document& document, const std::vector<BusPtr>& buses, const std::vector<StopPtr>& stops) const;
+    void GetMapDocument(svg::Document& document, const catalogue::TransportCatalogue& catalogue) const;
 
 private:
     const RenderSettings settings_;
