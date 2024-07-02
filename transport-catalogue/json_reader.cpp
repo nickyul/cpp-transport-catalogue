@@ -10,10 +10,6 @@ void JsonReader::MakeCatalogue(catalogue::TransportCatalogue& catalogue) const {
 	ParseBuses(base_requests_arr, catalogue);
 }
 
-const Array& JsonReader::GetRequestArray() const {
-	return document_.GetRoot().AsMap().at("stat_requests"s).AsArray();
-}
-
 void JsonReader::ParseStopCoord(const Array& base_requests_arr, catalogue::TransportCatalogue& catalogue) const {
 	for (const Node& stop_node : base_requests_arr) {
 		Dict stop_map = stop_node.AsMap();
@@ -83,6 +79,62 @@ svg::Color JsonReader::ParseColor(const Node& color) const {
 	return svg::NoneColor;
 }
 
+void JsonReader::MakeBusDict(json::Dict& r, BusStat stat, const json::Dict& request_map) const {
+	using namespace std::literals;
+
+	if (stat.total_stops == 0) {
+		r.emplace("request_id"s, Node{ request_map.at("id"s) });
+		r.emplace("error_message"s, Node{ "not found"s });
+		return;
+	}
+	r.emplace("curvature"s, Node{ stat.curvature });
+	r.emplace("request_id"s, Node{ request_map.at("id"s) });
+	r.emplace("route_length"s, Node{ stat.route_length });
+	r.emplace("stop_count"s, Node{ static_cast<int>(stat.total_stops) });
+	r.emplace("unique_stop_count"s, Node{ static_cast<int>(stat.unique_stops) });
+	return;
+}
+
+void JsonReader::MakeStopDict(json::Dict& r, const catalogue::TransportCatalogue& catalogue, const json::Dict& request_map) const {
+	using namespace std::literals;
+
+	if (catalogue.GetStop(request_map.at("name"s).AsString()) == nullptr) {
+		r.emplace("request_id"s, Node{ request_map.at("id"s) });
+		r.emplace("error_message"s, Node{ "not found"s });
+		return;
+	}
+	if (catalogue.RequestStop(catalogue.GetStop(request_map.at("name"s).AsString())) == nullptr) {
+		r.emplace("buses"s, std::vector<Node>{});
+		r.emplace("request_id"s, Node{ request_map.at("id"s) });
+		return;
+	}
+	std::vector<std::string> vec;
+	for (BusPtr bus : *catalogue.RequestStop(catalogue.GetStop(request_map.at("name"s).AsString()))) {
+		vec.emplace_back(bus->bus_name);
+	}
+	sort(vec.begin(), vec.end(), [](const std::string& lhs, const std::string& rhs) {
+		return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+		});
+	std::vector<Node> bus_names;
+	for (const std::string& bus_name : vec) {
+		bus_names.emplace_back(Node{ bus_name });
+	}
+	r.emplace("buses"s, bus_names);
+	r.emplace("request_id"s, Node{ request_map.at("id"s) });
+	return;
+}
+
+void JsonReader::MakeMapDict(json::Dict& r, const catalogue::TransportCatalogue& catalogue, const MapRenderer& renderer, const json::Node& id) const {
+	using namespace std::literals;
+
+	std::ostringstream map_stream;
+	svg::Document map_document;
+	renderer.GetMapDocument(map_document, catalogue);
+	map_document.Render(map_stream);
+	r.emplace("map"s, map_stream.str());
+	r.emplace("request_id"s, id);
+}
+
 RenderSettings JsonReader::ParseSettings() const {
 	RenderSettings settings;
 	Dict render_settings_map = document_.GetRoot().AsMap().at("render_settings"s).AsMap();
@@ -111,4 +163,31 @@ RenderSettings JsonReader::ParseSettings() const {
 		settings.color_palette_.emplace_back(ParseColor(color));
 	}
 	return settings;
+}
+
+json::Document JsonReader::GetRequestDocument(const catalogue::TransportCatalogue& catalogue, const MapRenderer& renderer) const {
+	using namespace std::literals;
+
+	std::vector<Node> res;
+	for (const Node& request_node : document_.GetRoot().AsMap().at("stat_requests"s).AsArray()) {
+		Dict request_map = request_node.AsMap();
+		if (request_map.at("type"s).AsString() == "Bus"s) {
+			BusStat stat = catalogue.RequestBus(request_map.at("name"s).AsString());
+			Dict r;
+			MakeBusDict(r, stat, request_map);
+			res.emplace_back(move(r));
+		}
+		else if (request_map.at("type"s).AsString() == "Stop"s) {
+			Dict r;
+			MakeStopDict(r, catalogue, request_map);
+			res.emplace_back(move(r));
+		}
+		else if (request_map.at("type"s).AsString() == "Map"s) {
+			Dict r;
+			MakeMapDict(r, catalogue, renderer, request_map.at("id"s));
+			res.emplace_back(move(r));
+		}
+	}
+	return Document{ Node{res} };
+
 }
