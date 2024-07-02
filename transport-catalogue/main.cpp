@@ -1,10 +1,9 @@
 #include <iostream>
 #include <string>
 
-#include "request_handler.h"
 #include "map_renderer.h"
 #include "json_reader.h"
-
+#include "request_handler.h"
 using namespace std;
 using namespace catalogue;
 using namespace json;
@@ -15,9 +14,11 @@ int main() {
     json_reader.MakeCatalogue(catalogue);
     RenderSettings settings = json_reader.ParseSettings();
 
-    RequestHandler request_handler(catalogue, json_reader, settings);
+    MapRenderer renderer(settings);
+
+    RequestHandler request_handler(catalogue, json_reader, renderer);
     
-    Document doc_out = request_handler.GetRequestDocument();
+    Document doc_out = json_reader.GetRequestDocument(catalogue, renderer);
 
     Print(doc_out, cout);
 
