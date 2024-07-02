@@ -22,7 +22,26 @@ int MapRenderer::GetPaletteSize() const {
     return settings_.color_palette_.size();
 }
 
-void MapRenderer::GetMapDocument(svg::Document& document, const std::vector<BusPtr>& buses, const std::vector<StopPtr>& stops) const {
+void MapRenderer::GetMapDocument(svg::Document& document, const catalogue::TransportCatalogue& catalogue) const {
+    std::vector<BusPtr> buses;
+    std::vector<StopPtr> stops;
+
+    for (const auto& [busname, bus] : *catalogue.GetBusMap()) {
+        buses.emplace_back(bus);
+    }
+
+    sort(buses.begin(), buses.end(), [](const BusPtr& lhs, const BusPtr& rhs) {
+        return std::lexicographical_compare(lhs->bus_name.begin(), lhs->bus_name.end(), rhs->bus_name.begin(), rhs->bus_name.end());
+        });
+
+    for (const auto& [stop_ptr, set_bus] : *catalogue.GetBusesByStop()) {
+        if (!set_bus.empty()) {
+            stops.emplace_back(stop_ptr);
+        }
+    }
+    sort(stops.begin(), stops.end(), [](const StopPtr& lhs, const StopPtr& rhs) {
+        return std::lexicographical_compare(lhs->stop_name.begin(), lhs->stop_name.end(), rhs->stop_name.begin(), rhs->stop_name.end());
+        });
 
     std::vector<catalogue::detail::Coordinates> geo_coords;
     std::vector<std::pair<BusPtr, int>> buses_palette;
