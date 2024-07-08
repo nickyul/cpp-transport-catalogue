@@ -79,34 +79,49 @@ svg::Color JsonReader::ParseColor(const Node& color) const {
 	return svg::NoneColor;
 }
 
-void JsonReader::MakeBusDict(json::Dict& r, BusStat stat, const json::Dict& request_map) const {
+Node JsonReader::MakeBusDict(BusStat stat, const json::Dict& request_map) const {
 	using namespace std::literals;
+	Builder result;
 
 	if (stat.total_stops == 0) {
-		r.emplace("request_id"s, Node{ request_map.at("id"s) });
-		r.emplace("error_message"s, Node{ "not found"s });
-		return;
+		result.StartDict().
+			Key("request_id"s).Value(request_map.at("id"s).AsInt()).
+			Key("error_message"s).Value("not found"s).
+			EndDict();
+
+		return result.Build();
 	}
-	r.emplace("curvature"s, Node{ stat.curvature });
-	r.emplace("request_id"s, Node{ request_map.at("id"s) });
-	r.emplace("route_length"s, Node{ stat.route_length });
-	r.emplace("stop_count"s, Node{ static_cast<int>(stat.total_stops) });
-	r.emplace("unique_stop_count"s, Node{ static_cast<int>(stat.unique_stops) });
-	return;
+
+	result.StartDict().
+		Key("curvature"s).Value(stat.curvature).
+		Key("request_id"s).Value(request_map.at("id"s).AsInt()).
+		Key("route_length"s).Value(stat.route_length).
+		Key("stop_count"s).Value(static_cast<int>(stat.total_stops)).
+		Key("unique_stop_count"s).Value(static_cast<int>(stat.unique_stops)).
+		EndDict();
+
+	return result.Build();
 }
 
-void JsonReader::MakeStopDict(json::Dict& r, const catalogue::TransportCatalogue& catalogue, const json::Dict& request_map) const {
+Node JsonReader::MakeStopDict(const catalogue::TransportCatalogue& catalogue, const json::Dict& request_map) const {
 	using namespace std::literals;
+	Builder result;
 
 	if (catalogue.GetStop(request_map.at("name"s).AsString()) == nullptr) {
-		r.emplace("request_id"s, Node{ request_map.at("id"s) });
-		r.emplace("error_message"s, Node{ "not found"s });
-		return;
+		result.StartDict().
+			Key("request_id"s).Value(request_map.at("id"s).AsInt()).
+			Key("error_message"s).Value("not found"s).
+			EndDict();
+
+		return result.Build();
 	}
 	if (catalogue.RequestStop(catalogue.GetStop(request_map.at("name"s).AsString())) == nullptr) {
-		r.emplace("buses"s, std::vector<Node>{});
-		r.emplace("request_id"s, Node{ request_map.at("id"s) });
-		return;
+		result.StartDict().
+			Key("buses"s).StartArray().EndArray().
+			Key("request_id").Value(request_map.at("id"s).AsInt()).
+			EndDict();
+
+		return result.Build();
 	}
 	std::vector<std::string> vec;
 	for (BusPtr bus : *catalogue.RequestStop(catalogue.GetStop(request_map.at("name"s).AsString()))) {
@@ -119,20 +134,28 @@ void JsonReader::MakeStopDict(json::Dict& r, const catalogue::TransportCatalogue
 	for (const std::string& bus_name : vec) {
 		bus_names.emplace_back(Node{ bus_name });
 	}
-	r.emplace("buses"s, bus_names);
-	r.emplace("request_id"s, Node{ request_map.at("id"s) });
-	return;
+	result.StartDict().
+		Key("buses"s).Value(bus_names).
+		Key("request_id"s).Value(request_map.at("id"s).AsInt()).
+		EndDict();
+
+	return result.Build();
 }
 
-void JsonReader::MakeMapDict(json::Dict& r, const catalogue::TransportCatalogue& catalogue, const MapRenderer& renderer, const json::Node& id) const {
+Node JsonReader::MakeMapDict(const catalogue::TransportCatalogue& catalogue, const MapRenderer& renderer, const json::Node& id) const {
 	using namespace std::literals;
+	Builder result;
 
 	std::ostringstream map_stream;
 	svg::Document map_document;
 	renderer.GetMapDocument(map_document, catalogue);
 	map_document.Render(map_stream);
-	r.emplace("map"s, map_stream.str());
-	r.emplace("request_id"s, id);
+	result.StartDict().
+		Key("map"s).Value(map_stream.str()).
+		Key("request_id"s).Value(id.AsInt()).
+		EndDict();
+	
+	return result.Build();
 }
 
 RenderSettings JsonReader::ParseSettings() const {
@@ -173,21 +196,15 @@ json::Document JsonReader::GetRequestDocument(const catalogue::TransportCatalogu
 		Dict request_map = request_node.AsMap();
 		if (request_map.at("type"s).AsString() == "Bus"s) {
 			BusStat stat = catalogue.RequestBus(request_map.at("name"s).AsString());
-			Dict r;
-			MakeBusDict(r, stat, request_map);
-			res.emplace_back(move(r));
+			res.emplace_back(MakeBusDict(stat, request_map));
+
 		}
 		else if (request_map.at("type"s).AsString() == "Stop"s) {
-			Dict r;
-			MakeStopDict(r, catalogue, request_map);
-			res.emplace_back(move(r));
+			res.emplace_back(MakeStopDict(catalogue, request_map));
 		}
 		else if (request_map.at("type"s).AsString() == "Map"s) {
-			Dict r;
-			MakeMapDict(r, catalogue, renderer, request_map.at("id"s));
-			res.emplace_back(move(r));
+			res.emplace_back(MakeMapDict(catalogue, renderer, request_map.at("id"s)));
 		}
 	}
 	return Document{ Node{res} };
-
 }
