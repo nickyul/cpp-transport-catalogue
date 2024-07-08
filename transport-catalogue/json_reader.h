@@ -1,6 +1,6 @@
 #pragma once
 #include "transport_catalogue.h"
-#include "json.h"
+#include "json_builder.h"
 #include "map_renderer.h"
 #include <sstream>
 
@@ -36,9 +36,9 @@ private:
 
 	svg::Color ParseColor(const Node& color) const;
 
-	void MakeBusDict(json::Dict& r, BusStat stat, const json::Dict& request_map) const;
+	Node MakeBusDict(BusStat stat, const json::Dict& request_map) const;
 
-	void MakeStopDict(json::Dict& r, const catalogue::TransportCatalogue& catalogue, const json::Dict& request_map) const;
+	Node MakeStopDict(const catalogue::TransportCatalogue& catalogue, const json::Dict& request_map) const;
 
-	void MakeMapDict(json::Dict& r, const catalogue::TransportCatalogue& catalogue, const MapRenderer& renderer, const json::Node& id) const;
+	Node MakeMapDict(const catalogue::TransportCatalogue& catalogue, const MapRenderer& renderer, const json::Node& id) const;
 };
