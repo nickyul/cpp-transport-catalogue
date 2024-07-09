@@ -1,14 +1,14 @@
 #include "json_builder.h"
 
 namespace json {
-    DictContext Builder::StartDict() {
+    Builder::DictContext Builder::StartDict() {
         Node* node = new Node(Dict());
         nodes_stack_.emplace_back(node);
 
         return DictContext(*this);
     }
 
-    KeyContext Builder::Key(std::string key) {
+    Builder::KeyContext Builder::Key(std::string key) {
         if (nodes_stack_.empty()) {
             throw std::logic_error("Can't add key. Try StartDict");
         }
@@ -51,7 +51,7 @@ namespace json {
         return *this;
     }
 
-    ArrayContext Builder::StartArray() {
+    Builder::ArrayContext Builder::StartArray() {
         Node* node = new Node(Array());
         nodes_stack_.emplace_back(node);
 
@@ -139,53 +139,5 @@ namespace json {
                 return;
             }
         }
-    }
-
-
-    BaseContext::BaseContext(Builder& builder)
-        : builder_(builder) {}
-
-    KeyContext BaseContext::Key(std::string key) {
-        return builder_.Key(key);
-    }
-
-    DictContext BaseContext::StartDict() {
-        return builder_.StartDict();
-    }
-
-    ArrayContext BaseContext::StartArray() {
-        return builder_.StartArray();
-    }
-
-    Builder& BaseContext::Value(Node::Value value) {
-        return builder_.Value(value);
-    }
-
-    Builder& BaseContext::EndDict() {
-        return builder_.EndDict();
-    }
-
-    Builder& BaseContext::EndArray() {
-        return builder_.EndArray();
-    }
-
-
-    KeyContext::KeyContext(Builder& builder)
-        : BaseContext(builder) {}
-
-    DictContext KeyContext::Value(Node::Value value) {
-        return BaseContext::Value(value);
-    }
-
-
-    DictContext::DictContext(Builder& builder)
-        : BaseContext(builder) {}
-
-
-    ArrayContext::ArrayContext(Builder& builder)
-        : BaseContext(builder) {}
-
-    ArrayContext ArrayContext::Value(Node::Value value) {
-        return BaseContext::Value(value);
     }
 }
