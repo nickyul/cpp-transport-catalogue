@@ -12,7 +12,6 @@ void TransportCatalogue::AddDistance(StopPtr stop_from, StopPtr stop_to, int dis
 	pair_stop_to_distance_[{stop_from, stop_to}] = distance;
 }
 
-
 void TransportCatalogue::AddBus(const std::string& bus_name, const std::vector<StopPtr> stops, bool is_roundtrip) {
 	const Bus bus{ bus_name, std::move(stops), is_roundtrip };
 	buses_.emplace_back(std::move(bus));
@@ -83,6 +82,18 @@ const std::unordered_map<StopPtr, std::unordered_set<BusPtr>>* catalogue::Transp
 
 const BusMap* catalogue::TransportCatalogue::GetBusMap() const {
 	return &busname_to_bus_;
+}
+
+const StopMap* catalogue::TransportCatalogue::GetStopMap() const {
+	return &stopname_to_stop_;
+}
+
+const std::deque<Stop>* catalogue::TransportCatalogue::GetStops() const {
+	return &stops_;
+}
+
+const std::deque<Bus>* catalogue::TransportCatalogue::GetBuses() const {
+	return &buses_;
 }
 
 int TransportCatalogue::GetDistance(StopPtr stop_from, StopPtr stop_to) const {
