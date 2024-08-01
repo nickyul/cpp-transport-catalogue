@@ -42,6 +42,9 @@ namespace catalogue {
 		BusPtr GetBus(std::string_view bus_name) const;
 		const std::unordered_map<StopPtr, std::unordered_set<BusPtr>>* GetBusesByStop() const;
 		const BusMap* GetBusMap() const;
+		const StopMap* GetStopMap() const;
+		const std::deque<Stop>* GetStops() const;
+		const std::deque<Bus>* GetBuses() const;
 		int GetDistance(StopPtr stop_from, StopPtr stop_to) const;
 
 	private:
