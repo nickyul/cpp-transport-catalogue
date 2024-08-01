@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <stdexcept>
 
 #include "map_renderer.h"
 #include "json_reader.h"
