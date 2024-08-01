@@ -2,12 +2,23 @@
 
 using namespace std::literals;
 
-
 void JsonReader::MakeCatalogue(catalogue::TransportCatalogue& catalogue) const {
 	Array base_requests_arr = document_.GetRoot().AsMap().at("base_requests"s).AsArray();
 	ParseStopCoord(base_requests_arr, catalogue);
 	ParseStopDistances(base_requests_arr, catalogue);
 	ParseBuses(base_requests_arr, catalogue);
+}
+
+RouteSettings JsonReader::GetRouteSettings() const {
+	Dict settings = document_.GetRoot().AsMap().at("routing_settings"s).AsMap();
+
+	RouteSettings result;
+	result.bus_velocity = settings.at("bus_velocity"s).AsDouble();
+	result.bus_wait_time = settings.at("bus_wait_time"s).AsDouble();
+	if (result.bus_velocity < 1 || result.bus_velocity > 1000 || result.bus_wait_time < 1 || result.bus_wait_time > 1000) {
+		throw std::invalid_argument("Non correct velocity or bus wait time"s);
+	}
+	return result;
 }
 
 void JsonReader::ParseStopCoord(const Array& base_requests_arr, catalogue::TransportCatalogue& catalogue) const {
@@ -158,6 +169,48 @@ Node JsonReader::MakeMapDict(const catalogue::TransportCatalogue& catalogue, con
 	return result.Build();
 }
 
+Node JsonReader::MakeRouteDict(const TransportRouter& router, const json::Dict& request_map) const {
+	using namespace std::literals;
+	Builder result;
+
+	std::optional<graph::Router<RouteWeight>::RouteInfo> info = router.BuildRoute(request_map.at("from"s).AsString(), request_map.at("to"s).AsString());
+	
+	if (!info) {
+		result.StartDict().
+			Key("request_id"s).Value(request_map.at("id"s).AsInt()).
+			Key("error_message"s).Value("not found"s).
+			EndDict();
+		return result.Build();
+	}
+
+	result.StartDict().
+		Key("request_id"s).Value(request_map.at("id"s).AsInt()).
+		Key("total_time"s).Value(info.value().weight.route_time).
+		Key("items"s).StartArray();
+
+	for (const auto& egde_id : info.value().edges) {
+		RouteWeight item_weight = router.GetRouteWeight(egde_id);
+		if (item_weight.is_stop) {
+			result.StartDict().
+				Key("type"s).Value("Wait"s).
+				Key("stop_name"s).Value(std::string(item_weight.name)).
+				Key("time"s).Value(item_weight.route_time).
+				EndDict();
+		}
+		else {
+			result.StartDict().
+				Key("type"s).Value("Bus"s).
+				Key("bus"s).Value(std::string(item_weight.name)).
+				Key("span_count"s).Value(item_weight.span_count).
+				Key("time"s).Value(item_weight.route_time).
+				EndDict();
+		}
+	}
+	result.EndArray().EndDict();
+
+	return result.Build();
+}
+
 RenderSettings JsonReader::ParseSettings() const {
 	RenderSettings settings;
 	Dict render_settings_map = document_.GetRoot().AsMap().at("render_settings"s).AsMap();
@@ -188,7 +241,7 @@ RenderSettings JsonReader::ParseSettings() const {
 	return settings;
 }
 
-json::Document JsonReader::GetRequestDocument(const catalogue::TransportCatalogue& catalogue, const MapRenderer& renderer) const {
+json::Document JsonReader::GetRequestDocument(const catalogue::TransportCatalogue& catalogue, const MapRenderer& renderer, const TransportRouter& router) const {
 	using namespace std::literals;
 
 	std::vector<Node> res;
@@ -197,13 +250,15 @@ json::Document JsonReader::GetRequestDocument(const catalogue::TransportCatalogu
 		if (request_map.at("type"s).AsString() == "Bus"s) {
 			BusStat stat = catalogue.RequestBus(request_map.at("name"s).AsString());
 			res.emplace_back(MakeBusDict(stat, request_map));
-
 		}
 		else if (request_map.at("type"s).AsString() == "Stop"s) {
 			res.emplace_back(MakeStopDict(catalogue, request_map));
 		}
 		else if (request_map.at("type"s).AsString() == "Map"s) {
 			res.emplace_back(MakeMapDict(catalogue, renderer, request_map.at("id"s)));
+		}
+		else if (request_map.at("type"s).AsString() == "Route"s) {
+			res.emplace_back(MakeRouteDict(router, request_map));
 		}
 	}
 	return Document{ Node{res} };
