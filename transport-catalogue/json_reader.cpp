@@ -173,9 +173,9 @@ Node JsonReader::MakeRouteDict(const TransportRouter& router, const json::Dict& 
 	using namespace std::literals;
 	Builder result;
 
-	std::optional<graph::Router<RouteWeight>::RouteInfo> info = router.BuildRoute(request_map.at("from"s).AsString(), request_map.at("to"s).AsString());
+	std::optional<std::pair<Router<RouteWeight>::RouteInfo, std::vector<RouteWeight>>> info = router.BuildRoute(request_map.at("from"s).AsString(), request_map.at("to"s).AsString());
 	
-	if (!info) {
+	if (!info.has_value()) {
 		result.StartDict().
 			Key("request_id"s).Value(request_map.at("id"s).AsInt()).
 			Key("error_message"s).Value("not found"s).
@@ -185,11 +185,10 @@ Node JsonReader::MakeRouteDict(const TransportRouter& router, const json::Dict& 
 
 	result.StartDict().
 		Key("request_id"s).Value(request_map.at("id"s).AsInt()).
-		Key("total_time"s).Value(info.value().weight.route_time).
+		Key("total_time"s).Value(info.value().first.weight.route_time).
 		Key("items"s).StartArray();
 
-	for (const auto& egde_id : info.value().edges) {
-		RouteWeight item_weight = router.GetRouteWeight(egde_id);
+	for (const RouteWeight& item_weight : info.value().second) {
 		if (item_weight.is_stop) {
 			result.StartDict().
 				Key("type"s).Value("Wait"s).
