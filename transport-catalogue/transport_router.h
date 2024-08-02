@@ -13,8 +13,6 @@
 
 using namespace graph;
 
-constexpr static double TRANSLATE_TO_M_MIN = 1000.0 / 60.0;
-
 struct RouteWeight {
 	bool is_stop = true;
 	std::string_view name;
@@ -38,16 +36,15 @@ class TransportRouter {
 public:
 	TransportRouter(const catalogue::TransportCatalogue& catalogue, const RouteSettings& settings);
 
-	RouteWeight GetRouteWeight(size_t egde_id) const;
-
-	std::optional<Router<RouteWeight>::RouteInfo> BuildRoute(std::string_view from, std::string_view to) const;
+	std::optional<std::pair<Router<RouteWeight>::RouteInfo, std::vector<RouteWeight>>> BuildRoute(std::string_view from, std::string_view to) const;
 
 private:
+	constexpr static double TRANSLATE_TO_M_MIN = 1000.0 / 60.0;
+
+	void SetStopsGraph(const catalogue::TransportCatalogue& catalogue);
+	void SetBusesGraph(const catalogue::TransportCatalogue& catalogue);
 
 	RouteSettings settings_;
-
-	void MakeGraph(const catalogue::TransportCatalogue& catalogue);
-	
 	std::unordered_map<std::string_view, StopId> stop_name_to_id_;
 	DirectedWeightedGraph<RouteWeight> graph_;
 	std::unique_ptr<Router<RouteWeight>> router_ptr_ = nullptr;
